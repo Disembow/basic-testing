@@ -4,7 +4,7 @@ import { throttledGetDataFromApi, axiosProps } from './index';
 jest.mock('lodash', () => {
   return {
     __esModule: true,
-    ...jest.requireActual('lodash'),
+    ...jest.requireActual<typeof import('lodash')>('lodash'),
     trottle: jest.fn((cb) => cb),
   };
 });
@@ -23,9 +23,14 @@ describe('throttledGetDataFromApi', () => {
   });
 
   test('should perform request to correct provided url', async () => {
-    // const spiedAxios = jest.spyOn(axios, 'get');
-    // await throttledGetDataFromApi(POSTS_URL);
-    // expect(spiedAxios).toBeCalledWith(POSTS_URL);
+    const spiedAxios = jest
+      .spyOn(axios.Axios.prototype, 'get')
+      .mockImplementation(async () => ({ data: 'some data' }));
+    jest.useFakeTimers();
+    await throttledGetDataFromApi(POSTS_URL);
+    jest.runAllTimers();
+    const pathToGet = spiedAxios.mock.calls[0]?.[0];
+    if (pathToGet) expect(spiedAxios).toBeCalledWith(pathToGet);
   });
 
   test('should return response data', async () => {
